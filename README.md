@@ -10,9 +10,9 @@ Is very simple, when you need to get a picture of gallery or take a picture, use
 
 ```java
 RxPhoto.request(context,TypeRequest.GALLERY)
-       .compose(Transformers.<Bitmap>applySchedeulers())
+       .compose(Transformers.<Uri>applySchedeulers())
        .doOnNext((uri) -> {
-          //your picture in bitmap format
+          //your picture uri
        })
        .subscribe();
 ```
@@ -26,9 +26,9 @@ RxPhoto.request(context,TypeRequest.GALLERY)
               return RxPhoto.getBitmap(uriObservable);
            }
        })
-       .compose(Transformers.<Uri>applySchedeulers())
-       .doOnNext((uri) -> {
-          //your picture uri
+       .compose(Transformers.<Bitmap>applySchedeulers())
+       .doOnNext((bitmap) -> {
+          //your picture in bitmap format
        })
        .subscribe();
 ```
