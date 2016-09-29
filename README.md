@@ -11,8 +11,24 @@ Is very simple, when you need to get a picture of gallery or take a picture, use
 ```java
 RxPhoto.request(context,TypeRequest.GALLERY)
        .compose(Transformers.<Bitmap>applySchedeulers())
-       .doOnNext((bitmap) -> {
+       .doOnNext((uri) -> {
           //your picture in bitmap format
+       })
+       .subscribe();
+```
+If you need to return Bitmap use Observable.Transformer:
+
+```java
+RxPhoto.request(context,TypeRequest.GALLERY)
+       .compose(new Observable.Transformer<Uri, Bitmap>() {
+           @Override
+           public Observable<Bitmap> call(Observable<Uri> uriObservable) {
+              return RxPhoto.getBitmap(uriObservable);
+           }
+       })
+       .compose(Transformers.<Uri>applySchedeulers())
+       .doOnNext((uri) -> {
+          //your picture uri
        })
        .subscribe();
 ```
@@ -34,15 +50,9 @@ and , add this dependency
 
 ```groovy
 dependencies {
-	compile 'com.github.oliveiradev:RxPhoto:0.1.0'
+	compile 'com.github.popalay:rxphoto:e1d61957a7'
 }
 ```
-
-
-## To do
-- [ ] Add bitmap compressor
-- [ ] Define image resize
-- [ ] Add run time permissions for android > 6
 
 
 ## Sample
