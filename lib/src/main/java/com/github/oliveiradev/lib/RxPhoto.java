@@ -10,20 +10,43 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import rx.Observable;
+import rx.functions.Func1;
 import rx.subjects.PublishSubject;
 import rx.subjects.SerializedSubject;
 import rx.subjects.Subject;
 
 public final class RxPhoto {
 
-    private static Subject<Bitmap, Bitmap> subject = new SerializedSubject(PublishSubject.create());
-    private static Context mContext;
+    private static Subject<Uri, Uri> subject = new SerializedSubject(PublishSubject.create());
+    private static Context mContext; //use only Application Context
 
-    public static Observable<Bitmap> request(Context context, TypeRequest typeRequest) {
+    public static Observable<Uri> request(Context context, TypeRequest typeRequest) {
         mContext = context;
         startOverlapActivity(typeRequest);
         subject = Factory.create();
         return subject;
+    }
+
+    public static Observable<Bitmap> getBitmap(Observable<Uri> observable) {
+        return observable.map(new Func1<Uri, Bitmap>() {
+            @Override
+            public Bitmap call(Uri uri) {
+                try {
+                    return getBitmapFromStream(uri);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    Observable.error(e);
+                    return null;
+                }
+            }
+        });
+    }
+
+    protected static void onActivityResult(Uri uri) {
+        if (uri != null) {
+            subject.onNext(uri);
+            subject.onCompleted();
+        }
     }
 
     private static void startOverlapActivity(TypeRequest typeRequest) {
@@ -36,24 +59,14 @@ public final class RxPhoto {
     private static Bitmap getBitmapFromStream(Uri url) throws IOException {
         InputStream stream = mContext.getContentResolver().openInputStream(url);
         Bitmap bitmap = BitmapFactory.decodeStream(stream);
-        if (stream != null) stream.close();
+        if (stream != null)
+            stream.close();
         return bitmap;
     }
 
-    protected static void onActivityResult(Uri uri) {
-            if (uri != null) {
-                try {
-                    subject.onNext(getBitmapFromStream(uri));
-                    subject.onCompleted();
-                } catch (IOException e) {
-                    subject.onError(e);
-                    e.printStackTrace();
-                }
-            }
-    }
+    private static class Factory {
 
-    private static class Factory{
-        public static Subject create(){
+        public static Subject create() {
             return new SerializedSubject(PublishSubject.create());
         }
     }
